@@ -1,0 +1,10 @@
+# os specific
+.DS_Store
+
+# pycharm
+.idea/
+
+# dependencies
+venv/
+env/
+.env/
