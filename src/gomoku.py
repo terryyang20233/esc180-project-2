@@ -42,6 +42,19 @@ def is_bounded(board, y_end, x_end, length, d_y, d_x):
     else:
         return "OPEN"
 
+def all_rows(board):
+    rows = []
+    for i in range(len(board)):
+        rows.append((0, i, 1, 0))
+        rows.append((0, i, 1, 1))
+        rows.append((0, i, 1, -1))
+    for i in range(len(board[0])):
+        rows.append((i, 0, 0, 1))
+    for i in range(1, len(board[0])):
+        rows.append((i, 0, 1, 1))
+        rows.append((i, len(board[0]) - 1, 1, -1))
+    return rows
+
 def detect_row(board, col, y_start, x_start, length, d_y, d_x):
     open_seq_count = 0
     semi_open_seq_count = 0
@@ -71,51 +84,29 @@ def detect_row(board, col, y_start, x_start, length, d_y, d_x):
                 elif open == "SEMIOPEN":
                     semi_open_seq_count += 1
             len_col = 0
-
     return open_seq_count, semi_open_seq_count
-
 
 def detect_rows(board, col, length):
     open_seq_count, semi_open_seq_count = 0, 0
-    for i in range(len(board)):
-        num_open, num_semi_open = detect_row(board, col, 0, i, length, 1, 0)
-        open_seq_count += num_open
-        semi_open_seq_count += num_semi_open
-        num_open, num_semi_open = detect_row(board, col, 0, i, length, 1, 1)
-        open_seq_count += num_open
-        semi_open_seq_count += num_semi_open
-        num_open, num_semi_open = detect_row(board, col, 0, i, length, 1, -1)
-        open_seq_count += num_open
-        semi_open_seq_count += num_semi_open
-
-        num_open, num_semi_open = detect_row(board, col, i, 0, length, 0, 1)
-        open_seq_count += num_open
-        semi_open_seq_count += num_semi_open
-        num_open, num_semi_open = detect_row(board, col, i, 0, length, 1, 1)
-        open_seq_count += num_open
-        semi_open_seq_count += num_semi_open
-
-        num_open, num_semi_open = detect_row(board, col, i, len(board) - 1, length, 1, -1)
+    for y_start, x_start, d_y, d_x in all_rows(board):
+        num_open, num_semi_open = detect_row(board, col, y_start, x_start, length, d_y, d_x)
         open_seq_count += num_open
         semi_open_seq_count += num_semi_open
     return open_seq_count, semi_open_seq_count
 
-
 def search_max(board):
-    s_board = board.copy()
     max_score = -1e99
     move_y, move_x = 0, 0
     for y in range(len(board)):
-        for x in range(len(board)):
-            if s_board[y][x] == " ":
-                s_board[y][x] = "b"
-                temp_score = score(s_board)
+        for x in range(len(board[0])):
+            if board[y][x] == " ":
+                board[y][x] = "b"
+                temp_score = score(board)
+                board[y][x] = " "
                 if temp_score > max_score:
                     max_score = temp_score
                     move_y, move_x = y, x
-                s_board[y][x] = " "
     return move_y, move_x
-
 
 def score(board):
     MAX_SCORE = 100000
