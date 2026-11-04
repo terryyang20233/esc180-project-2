@@ -9,7 +9,7 @@ This is a placeholder that you should remove once you modify the function.
 Author(s): Michael Guerzhoy with tests contributed by Siavash Kazemian.  Last modified: Oct. 19, 2026
 """
 def in_board(board, y , x):
-    return x >= 0 and x <= len(board) -1 and y >= 0 and y <= len(board[0]) - 1
+    return x >= 0 and x <= len(board[0]) -1 and y >= 0 and y <= len(board) - 1
 
 def is_empty(board):
     for row in board:
@@ -44,13 +44,13 @@ def is_bounded(board, y_end, x_end, length, d_y, d_x):
 
 def all_rows(board):
     rows = []
-    for i in range(len(board)):
+    for i in range(len(board[0])):
         rows.append((0, i, 1, 0))
         rows.append((0, i, 1, 1))
         rows.append((0, i, 1, -1))
-    for i in range(len(board[0])):
+    for i in range(len(board)):
         rows.append((i, 0, 0, 1))
-    for i in range(1, len(board[0])):
+    for i in range(1, len(board)):
         rows.append((i, 0, 1, 1))
         rows.append((i, len(board[0]) - 1, 1, -1))
     return rows
@@ -80,7 +80,7 @@ def detect_row(board, col, y_start, x_start, length, d_y, d_x):
         open = is_bounded(board, y_end, x_end, length, d_y, d_x)
         if open == "OPEN":
             open_seq_count += 1
-        elif open == "SEMI_OPEN":
+        elif open == "SEMIOPEN":
             semi_open_seq_count += 1
     return open_seq_count, semi_open_seq_count
 
@@ -140,14 +140,13 @@ def check_all_rows(board, col, length):
     return count
 
 def is_win(board):
-    for i in range(5,len(board) + 1):
-        if check_all_rows(board, "b", i) > 0:
-            return "Black won"
-        elif check_all_rows(board, "w", i) > 0:
-            return "White won"
-        elif is_full(board):
-            return "Draw"
-        return "Continue playing"
+    if check_all_rows(board, "b", 5) > 0:
+        return "Black won"
+    elif check_all_rows(board, "w", 5) > 0:
+        return "White won"
+    elif is_full(board):
+        return "Draw"
+    return "Continue playing"
 
 def print_board(board):
     s = "*"
