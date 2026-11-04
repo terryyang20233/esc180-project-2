@@ -55,10 +55,8 @@ def all_rows(board):
         rows.append((i, len(board[0]) - 1, 1, -1))
     return rows
 
-def detect_row(board, col, y_start, x_start, length, d_y, d_x):
-    open_seq_count = 0
-    semi_open_seq_count = 0
-    ly, lx = [], []
+def detect_seg(board, col, y_start, x_start, length, d_y, d_x):
+    ends, ly, lx = [], [], []
     xit, yit = x_start, y_start
     while in_board(board, yit, xit):
         lx.append(xit)
@@ -67,23 +65,23 @@ def detect_row(board, col, y_start, x_start, length, d_y, d_x):
         yit += d_y
     len_col = 0
     for i in range(len(lx)):
-        cur = board[ly[i]][lx[i]]
-        if cur == col:
+        if board[ly[i]][lx[i]] == col:
             len_col += 1
-            if i == len(lx) - 1 and len_col == length:
-                open = is_bounded(board, ly[i], lx[i], length, d_y, d_x)
-                if open == "OPEN":
-                    open_seq_count += 1
-                elif open == "SEMIOPEN":
-                    semi_open_seq_count += 1
+            if (i == len(lx) - 1 or board[ly[i + 1]][lx[i + 1]] != col) and len_col == length:
+                ends.append((ly[i], lx[i]))
         else:
-            if i != 0 and len_col == length:
-                open = is_bounded(board, ly[i-1], lx[i-1], length, d_y, d_x)
-                if open == "OPEN":
-                    open_seq_count += 1
-                elif open == "SEMIOPEN":
-                    semi_open_seq_count += 1
             len_col = 0
+    return ends
+
+def detect_row(board, col, y_start, x_start, length, d_y, d_x):
+    open_seq_count = 0
+    semi_open_seq_count = 0
+    for y_end, x_end in detect_seg(board, col, y_start, x_start, length, d_y, d_x):
+        open = is_bounded(board, y_end, x_end, length, d_y, d_x)
+        if open == "OPEN":
+            open_seq_count += 1
+        elif open == "SEMI_OPEN":
+            semi_open_seq_count += 1
     return open_seq_count, semi_open_seq_count
 
 def detect_rows(board, col, length):
@@ -135,58 +133,21 @@ def score(board):
             10 * semi_open_b[3] +
             open_b[2] + semi_open_b[2] - open_w[2] - semi_open_w[2])
 
-def check_row(board, col, y_start, x_start, length, d_y, d_x):
+def check_all_rows(board, col, length):
     count = 0
-    ly, lx = [], []
-    xit, yit = x_start, y_start
-    while in_board(board, yit, xit):
-        lx.append(xit)
-        ly.append(yit)
-        xit += d_x
-        yit += d_y
-    len_col = 0
-    for i in range(len(lx)):
-        cur = board[ly[i]][lx[i]]
-        if cur == col:
-            len_col += 1
-            if i == len(lx) - 1 and len_col == length:
-                count += 1
-        else:
-            if i != 0 and len_col == length:
-                count += 1
-            len_col = 0
-    return count
-
-def check_rows(board, col, length):
-    count = 0
-    for i in range(len(board)):
-        num = check_row(board, col, 0, i, length, 1, 0)
-        count += num
-        num = check_row(board, col, 0, i, length, 1, 1)
-        count += num
-        num = check_row(board, col, 0, i, length, 1, -1)
-        count += num
-
-        num = check_row(board, col, i, 0, length, 0, 1)
-        count += num
-        num = check_row(board, col, i, 0, length, 1, 1)
-        count += num
-
-        num = check_row(board, col, i, len(board) - 1, length, 1, -1)
-        count += num
+    for y_start, x_start, d_y, d_x in all_rows(board):
+        count += len(detect_seg(board,col, y_start, x_start, length, d_y, d_x))
     return count
 
 def is_win(board):
     for i in range(5,len(board) + 1):
-        if check_rows(board, "b", i) > 0:
+        if check_all_rows(board, "b", i) > 0:
             return "Black won"
-        elif check_rows(board, "w", i) > 0:
+        elif check_all_rows(board, "w", i) > 0:
             return "White won"
         elif is_full(board):
             return "Draw"
-        else:
-            return "Continue playing"
-
+        return "Continue playing"
 
 def print_board(board):
     s = "*"
