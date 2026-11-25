@@ -8,29 +8,103 @@ This is a placeholder that you should remove once you modify the function.
 
 Author(s): Michael Guerzhoy with tests contributed by Siavash Kazemian.  Last modified: Oct. 19, 2026
 """
-
+def in_board(board, y , x):
+    return x >= 0 and x <= len(board[0]) -1 and y >= 0 and y <= len(board) - 1
 
 def is_empty(board):
-    pass
+    for row in board:
+        for cell in row:
+            if cell != " ":
+                return False
+    return True
 
+def is_full(board):
+    for row in board:
+        for cell in row:
+            if cell == " ":
+                return False
+    return True
 
 def is_bounded(board, y_end, x_end, length, d_y, d_x):
-    pass
+    open = 0
+    y1 = y_end + d_y
+    x1 = x_end + d_x
+    y2 = y_end - length * d_y
+    x2 = x_end - length * d_x
+    if in_board(board, y1, x1) and board[y1][x1] == " ":
+        open += 1
+    if in_board(board, y2, x2) and board[y2][x2] == " ":
+        open += 1
+    if open == 0:
+        return "CLOSED"
+    elif open == 1:
+        return "SEMIOPEN"
+    else:
+        return "OPEN"
 
+def all_rows(board):
+    rows = []
+    for i in range(len(board[0])):
+        rows.append((0, i, 1, 0))
+        rows.append((0, i, 1, 1))
+        rows.append((0, i, 1, -1))
+    for i in range(len(board)):
+        rows.append((i, 0, 0, 1))
+    for i in range(1, len(board)):
+        rows.append((i, 0, 1, 1))
+        rows.append((i, len(board[0]) - 1, 1, -1))
+    return rows
+
+def detect_seg(board, col, y_start, x_start, length, d_y, d_x):
+    ends, ly, lx = [], [], []
+    xit, yit = x_start, y_start
+    while in_board(board, yit, xit):
+        lx.append(xit)
+        ly.append(yit)
+        xit += d_x
+        yit += d_y
+    len_col = 0
+    for i in range(len(lx)):
+        if board[ly[i]][lx[i]] == col:
+            len_col += 1
+            if (i == len(lx) - 1 or board[ly[i + 1]][lx[i + 1]] != col) and len_col == length:
+                ends.append((ly[i], lx[i]))
+        else:
+            len_col = 0
+    return ends
 
 def detect_row(board, col, y_start, x_start, length, d_y, d_x):
+    open_seq_count = 0
+    semi_open_seq_count = 0
+    for y_end, x_end in detect_seg(board, col, y_start, x_start, length, d_y, d_x):
+        open = is_bounded(board, y_end, x_end, length, d_y, d_x)
+        if open == "OPEN":
+            open_seq_count += 1
+        elif open == "SEMIOPEN":
+            semi_open_seq_count += 1
     return open_seq_count, semi_open_seq_count
-
 
 def detect_rows(board, col, length):
-    ####CHANGE ME
     open_seq_count, semi_open_seq_count = 0, 0
+    for y_start, x_start, d_y, d_x in all_rows(board):
+        num_open, num_semi_open = detect_row(board, col, y_start, x_start, length, d_y, d_x)
+        open_seq_count += num_open
+        semi_open_seq_count += num_semi_open
     return open_seq_count, semi_open_seq_count
 
-
 def search_max(board):
+    max_score = -1e99
+    move_y, move_x = 0, 0
+    for y in range(len(board)):
+        for x in range(len(board[0])):
+            if board[y][x] == " ":
+                board[y][x] = "b"
+                temp_score = score(board)
+                board[y][x] = " "
+                if temp_score > max_score:
+                    max_score = temp_score
+                    move_y, move_x = y, x
     return move_y, move_x
-
 
 def score(board):
     MAX_SCORE = 100000
@@ -59,10 +133,20 @@ def score(board):
             10 * semi_open_b[3] +
             open_b[2] + semi_open_b[2] - open_w[2] - semi_open_w[2])
 
+def check_all_rows(board, col, length):
+    count = 0
+    for y_start, x_start, d_y, d_x in all_rows(board):
+        count += len(detect_seg(board,col, y_start, x_start, length, d_y, d_x))
+    return count
 
 def is_win(board):
-    pass
-
+    if check_all_rows(board, "b", 5) > 0:
+        return "Black won"
+    elif check_all_rows(board, "w", 5) > 0:
+        return "White won"
+    elif is_full(board):
+        return "Draw"
+    return "Continue playing"
 
 def print_board(board):
     s = "*"
@@ -358,5 +442,6 @@ def some_tests():
 
 
 if __name__ == '__main__':
-    play_gomoku(8)
+    # play_gomoku(8)
+    some_tests()
 
